@@ -1,0 +1,68 @@
+version: '3'
+
+services:
+  # --- DATABÁZE ---
+  mariadb:
+    build: requirements/mariadb
+    container_name: mariadb
+    restart: always
+    # Připojíme soubor s hesly
+    env_file: .env
+    # Namapujeme pojmenovaný volume na správnou složku v kontejneru
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    # Připojíme kontejner do naší sítě
+    networks:
+      - inception
+
+  # --- APLIKACE WORDPRESS ---
+  wordpress:
+    build: requirements/wordpress
+    container_name: wordpress
+    restart: always
+    env_file: .env
+    volumes:
+      - wordpress_data:/var/www/html
+    networks:
+      - inception
+    # Říkáme Dockeru, ať WordPress spustí až po databázi
+    depends_on:
+      - mariadb
+
+  # --- WEBOVÝ SERVER NGINX ---
+  nginx:
+    build: requirements/nginx
+    container_name: nginx
+    restart: always
+    env_file: .env
+    # NGINX jako jediný otevírá port ven do světa, a to pouze 443 
+    ports:
+      - "443:443"
+    # NGINX musí mít také přístup k souborům webu, aby mohl servírovat statické obrázky nebo CSS
+    volumes:
+      - wordpress_data:/var/www/html
+    networks:
+      - inception
+    depends_on:
+      - wordpress
+
+# --- DEFINICE SÍTĚ ---
+networks:
+  inception:
+    driver: bridge
+
+# --- DEFINICE SVAZKŮ (NAMED VOLUMES) ---
+# Tímto způsobem definujeme named volume, ale natvrdo ho nasměrujeme do tvé lokální složky
+volumes:
+  mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/mmravec/data/mariadb
+  wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/mmravec/data/wordpress
