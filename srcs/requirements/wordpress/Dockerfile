@@ -12,6 +12,8 @@ RUN apk update && apk add --no-cache \
     curl \
     mariadb-client
 
+RUN sed -i 's/memory_limit = 128M/memory_limit = 512M/g' /etc/php83/php.ini
+
 # 3. Stažení nástroje WP-CLI pro automatickou instalaci WordPressu
 RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
     && chmod +x wp-cli.phar \

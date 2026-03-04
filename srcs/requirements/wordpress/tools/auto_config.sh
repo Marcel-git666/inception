@@ -3,6 +3,9 @@
 # 1. Přejdeme do složky, kde má web ležet
 cd /var/www/html
 
+# Zvýšíme paměť pro WP-CLI, aby nepadalo při rozbalování
+export WP_CLI_PHP_ARGS='-d memory_limit=512M'
+
 # 2. Zkontrolujeme, jestli už není WordPress nainstalovaný
 if [ ! -e wp-config.php ]; then
     echo "Stahuji jádro WordPressu..."
