@@ -10,6 +10,12 @@ build:
 	@mkdir -p /home/mmravec/data/wordpress
 	docker compose -f $(COMPOSE_FILE) build
 
+# Bonus rule to build and start the bonus services
+bonus:
+	@mkdir -p /home/mmravec/data/mariadb
+	@mkdir -p /home/mmravec/data/wordpress
+	docker compose -f ./srcs/docker-compose-bonus.yml up -d --build
+
 # Start the containers in detached mode
 up:
 	docker compose -f $(COMPOSE_FILE) up -d

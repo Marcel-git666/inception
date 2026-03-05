@@ -1,42 +1,45 @@
 #!/bin/sh
 
-# 1. Přejdeme do složky, kde má web ležet
+# Go to the WordPress web directory (mapped via Docker Volumes)
 cd /var/www/html
 
-# Zvýšíme paměť pro WP-CLI, aby nepadalo při rozbalování
-export WP_CLI_PHP_ARGS='-d memory_limit=512M'
+# Check if WordPress is already installed by looking for the configuration file
+if [ ! -f "wp-config.php" ]; then
+    echo "WordPress is not installed. Starting configuration..."
 
-# 2. Zkontrolujeme, jestli už není WordPress nainstalovaný
-if [ ! -e wp-config.php ]; then
-    echo "Stahuji jádro WordPressu..."
+    # Download WordPress core files using WP-CLI
     wp core download --allow-root
 
-    echo "Vytvářím konfigurační soubor pro připojení k databázi..."
-    wp config create --dbname=$MYSQL_DATABASE \
-                     --dbuser=$MYSQL_USER \
-                     --dbpass=$MYSQL_PASSWORD \
-                     --dbhost=mariadb:3306 \
+    # Create the wp-config.php file using environment variables
+    # The --dbhost connects to our database container via internal Docker DNS
+    wp config create --dbname="${MYSQL_DATABASE}" \
+                     --dbuser="${MYSQL_USER}" \
+                     --dbpass="${MYSQL_PASSWORD}" \
+                     --dbhost="mariadb" \
                      --allow-root
 
-    echo "Instaluji WordPress..."
-    # Zde projekt vyžaduje vytvoření administrátora, jehož jméno nesmí obsahovat slovo admin/administrator [cite: 106, 107]
-    wp core install --url=$DOMAIN_NAME \
-                    --title="Inception mmravec" \
-                    --admin_user=$WP_ADMIN_USER \
-                    --admin_password=$WP_ADMIN_PASSWORD \
-                    --admin_email=$WP_ADMIN_EMAIL \
+    # Install WordPress and set up the administrator account
+    # [cite_start]Note: The admin username cannot contain 'admin' or 'administrator' [cite: 107]
+    wp core install --url="https://${DOMAIN_NAME}" \
+                    --title="Inception 42" \
+                    --admin_user="${WP_ADMIN_USER}" \
+                    --admin_password="${WP_ADMIN_PASSWORD}" \
+                    --admin_email="${WP_ADMIN_EMAIL}" \
+                    --skip-email \
                     --allow-root
 
-    echo "Vytvářím druhého, běžného uživatele..."
-    # Projekt vyžaduje, aby v databázi byli dva uživatelé [cite: 106]
-    wp user create $WP_USER $WP_USER_EMAIL --role=author --user_pass=$WP_USER_PASSWORD --allow-root
+    # Create a regular user (e.g., an author) for WordPress
+    wp user create "${WP_USER}" "${WP_USER_EMAIL}" \
+                   --user_pass="${WP_USER_PASSWORD}" \
+                   --role=author \
+                   --allow-root
 
-    # Nastavení správných práv pro webový server v Alpine Linuxu
-    chown -R nobody:nobody /var/www/html
+    echo "WordPress successfully configured!"
+else
+    echo "WordPress is already configured. Skipping installation..."
 fi
 
-echo "WordPress je připraven! Spouštím PHP-FPM..."
-# Spuštění php-fpm na popředí. V Alpine 3.20/3.22 je binárka pojmenována php-fpm83. 
-# Příznak -F zajistí běh na popředí, abychom nepoužili zakázané "hacky" typu tail -f[cite: 97, 104].
-# Příkaz exec zajistí, že se tento proces stane hlavním procesem kontejneru (PID 1)[cite: 105].
+echo "Starting PHP-FPM in the foreground..."
+# The exec command replaces the shell script with the PHP-FPM process (making it PID 1)
+# The -F flag forces PHP-FPM to run in the foreground instead of as a daemon, which is required for Docker containers.
 exec php-fpm83 -F

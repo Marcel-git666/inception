@@ -44,6 +44,19 @@ services:
     depends_on:
       - wordpress
 
+  # --- BONUS: ADMINER ---
+  adminer:
+    build: requirements/bonus/adminer
+    container_name: adminer
+    restart: always
+    # We expose port 8080 to the host for the bonus part 
+    ports:
+      - "8080:8080"
+    networks:
+      - inception
+    depends_on:
+      - mariadb
+
 # --- NETWORK DEFINITION ---
 networks:
   inception:

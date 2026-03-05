@@ -1,37 +1,37 @@
 #!/bin/sh
 
-# Zkontrolujeme, jestli už databáze neexistuje (abychom ji při restartu kontejneru nepřemazali)
+# Check if the database already exists (to prevent overwriting it on container restart)
 if [ ! -d "/var/lib/mysql/mysql" ]; then
-    echo "Inicializuji prázdnou databázi..."
-    # Vytvoření základní struktury databáze (systémové tabulky)
+    echo "Initializing empty database..."
+    # Create basic database structure (system tables)
     mariadb-install-db --user=mysql --datadir=/var/lib/mysql
 
-    echo "Vytvářím uživatele a databázi pro WordPress..."
-    # Vytvoříme si dočasný soubor s SQL příkazy
+    echo "Creating user and database for WordPress..."
+    # Create a temporary file with SQL commands
     cat << EOF > /tmp/init.sql
     FLUSH PRIVILEGES;
     
-    -- Nastavení hesla pro hlavního root uživatele databáze
+    -- Set password for the main root database user
     ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
     
-    -- Vytvoření databáze pro WordPress
+    -- Create database for WordPress
     CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\`;
     
-    -- Vytvoření uživatele pro WordPress a udělení všech práv k jeho databázi
+    -- Create WordPress user and grant all privileges on its database
     CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
     GRANT ALL PRIVILEGES ON \`${MYSQL_DATABASE}\`.* TO '${MYSQL_USER}'@'%';
     
     FLUSH PRIVILEGES;
 EOF
 
-    # Spustíme databázi v tzv. bootstrap módu, který jen provede naše SQL příkazy a zase se vypne
+    # Run the database in bootstrap mode, which executes our SQL commands and shuts down
     mysqld --user=mysql --bootstrap < /tmp/init.sql
     
-    # Úklid: smažeme dočasný soubor s hesly
+    # Cleanup: remove the temporary file with passwords
     rm -f /tmp/init.sql
 fi
 
-echo "Spouštím hlavní proces MariaDB..."
-# Parametr --console zajistí, že logy půjdou do terminálu a proces poběží na popředí.
-# Příkaz exec z něj udělá hlavní proces kontejneru (PID 1), čímž splníme přísná pravidla[cite: 105].
+echo "Starting main MariaDB process..."
+# The --console parameter ensures logs go to the terminal and the process runs in the foreground.
+# The exec command makes it the main container process (PID 1), fulfilling the strict requirements.
 exec mysqld --user=mysql --console
