@@ -1,34 +1,34 @@
-# Cesta k našemu docker-compose souboru
+# Path to the docker-compose file
 COMPOSE_FILE = ./srcs/docker-compose.yml
 
-# Hlavní pravidlo, které se spustí při zadání příkazu 'make'
+# Main rule, executed when running just 'make'
 all: build up
 
-# Vytvoření složek pro data (pro jistotu) a sestavení obrazů
+# Create data directories and build the images
 build:
-	@sudo mkdir -p /home/mmravec/data/mariadb
-	@sudo mkdir -p /home/mmravec/data/wordpress
+	@mkdir -p /home/mmravec/data/mariadb
+	@mkdir -p /home/mmravec/data/wordpress
 	docker compose -f $(COMPOSE_FILE) build
 
-# Spuštění kontejnerů na pozadí (-d znamená detached mode)
+# Start the containers in detached mode
 up:
 	docker compose -f $(COMPOSE_FILE) up -d
 
-# Vypnutí kontejnerů (bez smazání dat)
+# Stop the containers (without deleting data volumes)
 down:
 	docker compose -f $(COMPOSE_FILE) down
 
-# Zastavení kontejnerů, smazání sítě a odstranění svazků (čištění Dockeru)
-clean: down
+# Stop containers, remove networks, volumes, and clean Docker cache
+clean:
 	docker compose -f $(COMPOSE_FILE) down -v
 	docker system prune -af
 
-# Úplné pročištění (smaže i fyzická data z tvého disku pro čistý start)
+# Full clean: runs clean, then removes all physical data from the host disk
 fclean: clean
 	@sudo rm -rf /home/mmravec/data/mariadb/*
 	@sudo rm -rf /home/mmravec/data/wordpress/*
 
-# Znovusestavení celého projektu od nuly
+# Rebuild the entire project from scratch
 re: fclean all
 
 .PHONY: all build up down clean fclean re
