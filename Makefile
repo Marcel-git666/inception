@@ -18,7 +18,7 @@ bonus:
 
 # Start the containers in detached mode
 up:
-	docker compose -f $(COMPOSE_FILE) up -d
+	docker compose -f $(COMPOSE_FILE) up -d --remove-orphans
 
 # Stop the containers (without deleting data volumes)
 down:
@@ -37,4 +37,4 @@ fclean: clean
 # Rebuild the entire project from scratch
 re: fclean all
 
-.PHONY: all build up down clean fclean re
+.PHONY: all build up down clean fclean re bonus
