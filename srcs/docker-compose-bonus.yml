@@ -1,15 +1,13 @@
+# --- docker-compose-bonus.yml ---
 services:
   # --- DATABASE ---
   mariadb:
     build: requirements/mariadb
     container_name: mariadb
     restart: always
-    # Connect environment variables from the .env file
     env_file: .env
-    # Map the named volume to the correct directory inside the container
     volumes:
       - mariadb_data:/var/lib/mysql
-    # Connect the container to our custom network
     networks:
       - inception
 
@@ -23,7 +21,6 @@ services:
       - wordpress_data:/var/www/html
     networks:
       - inception
-    # Ensure WordPress starts only after the database is up
     depends_on:
       - mariadb
 
@@ -33,23 +30,21 @@ services:
     container_name: nginx
     restart: always
     env_file: .env
-    # NGINX is the only entry point to the infrastructure
     ports:
       - "443:443"
-    # NGINX needs access to the web files to serve static content
     volumes:
       - wordpress_data:/var/www/html
     networks:
       - inception
     depends_on:
       - wordpress
+      - lighttpd
 
   # --- BONUS: ADMINER ---
   adminer:
     build: requirements/bonus/adminer
     container_name: adminer
     restart: always
-    # We expose port 8080 to the host for the bonus part 
     ports:
       - "8080:8080"
     networks:
@@ -57,13 +52,22 @@ services:
     depends_on:
       - mariadb
 
+  # --- BONUS: LIGHTTPD ---
+  lighttpd:
+    build: requirements/bonus/static_web
+    container_name: lighttpd
+    restart: always
+    expose:
+      - "3000"
+    networks:
+      - inception
+
 # --- NETWORK DEFINITION ---
 networks:
   inception:
     driver: bridge
 
 # --- VOLUMES DEFINITION ---
-# Local named volumes securely mapped to the host's directory
 volumes:
   mariadb_data:
     driver: local
