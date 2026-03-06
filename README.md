@@ -3,29 +3,38 @@
 ## Description
 This project aims to broaden my knowledge of system administration by virtualizing a complete web infrastructure using Docker. The goal is to set up a small network of interconnected services running in separate containers, built from Alpine Linux. 
 
-The infrastructure consists of:
+The core infrastructure consists of:
 * **NGINX**: A web server acting as a secure entry point (HTTPS/TLSv1.2+ only).
 * **WordPress + PHP-FPM**: The content management system generating dynamic web pages.
 * **MariaDB**: The relational database storing WordPress data.
 
-The design relies entirely on Docker Compose to orchestrate the containers, ensuring they communicate via an isolated internal network while persisting data securely on the host machine using Docker Volumes.
+### Bonus Features
+In addition to the mandatory part, this project includes two extra services:
+* **Lighttpd**: A lightweight web server serving a custom static HTML/CSS website (my resume). It is accessible via a reverse proxy configured within the main NGINX container.
+* **Adminer**: A database management tool running in its own container. To maintain a clean repository, the Adminer PHP script is downloaded dynamically via `wget` during the image build process.
+
+The design relies entirely on Docker Compose to orchestrate the containers, ensuring they communicate via an isolated internal network while persisting data securely on the host machine using localized Docker Volumes (bind mounts).
 
 ## Instructions
 To build and execute this project, follow these steps:
 1. Ensure your host machine resolves `mmravec.42.fr` to `127.0.0.1` (or your VM's IP) in the `/etc/hosts` file.
 2. Create a `.env` file inside the `srcs/` directory containing the necessary credentials (see `DEV_DOC.md` for the template).
-3. Run `make` in the root directory. This will build the images and start the containers.
-4. Access the website at `https://mmravec.42.fr`.
+3. Run `make` in the root directory to build and start the core infrastructure. Alternatively, run `make bonus` to include the bonus services.
+4. Access the services via your browser:
+   * **Main Website (WordPress)**: `https://mmravec.42.fr`
+   * **Static Website (Bonus)**: `https://mmravec.42.fr/bonus/`
+   * **Adminer (Bonus)**: `http://localhost:8080` (or replace `localhost` with your VM's IP). *Use `mariadb` as the server name when logging in.*
 
 **Useful Makefile commands:**
-* `make`: Builds and starts the infrastructure.
-* `make down`: Stops the containers.
-* `make clean`: Stops containers and removes networks/images.
-* `make fclean`: Fully wipes the system, including local data volumes.
+* `make`: Builds and starts the core infrastructure.
+* `make bonus`: Builds and starts the infrastructure including the bonus containers.
+* `make down`: Stops the containers without deleting data.
+* `make clean`: Stops containers, removes networks, volumes, and local images.
+* `make fclean`: Fully wipes the system, including local physical data volumes, for a completely fresh start.
 
 ## Resources
-* **Official Documentation**: Docker, Docker Compose, Alpine Linux, NGINX, WordPress WP-CLI, MariaDB.
-* **AI Usage**: Artificial Intelligence (LLM) was used as a learning assistant throughout this project. I used it to understand complex concepts (like Docker internal DNS, FastCGI routing, and PID 1 management), to debug errors (e.g., WordPress memory limits), and to structure these Markdown documentation files. All generated code was thoroughly reviewed, tested, and rewritten to ensure complete understanding before implementation.
+* **Official Documentation**: Docker, Docker Compose, Alpine Linux, NGINX, WordPress WP-CLI, MariaDB, Lighttpd.
+* **AI Usage**: Artificial Intelligence (LLM) was used as a learning assistant throughout this project. I used it to understand complex concepts (like Docker internal DNS, FastCGI routing, Reverse Proxies, and PID 1 management), to debug errors (e.g., WordPress memory limits), and to structure these Markdown documentation files. All generated code was thoroughly reviewed, tested, and rewritten to ensure complete understanding before implementation.
 
 ## Technical Choices & Comparisons
 
