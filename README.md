@@ -9,9 +9,12 @@ The core infrastructure consists of:
 * **MariaDB**: The relational database storing WordPress data.
 
 ### Bonus Features
-In addition to the mandatory part, this project includes two extra services:
+In addition to the mandatory part, this project includes several extra services:
 * **Lighttpd**: A lightweight web server serving a custom static HTML/CSS website (my resume). It is accessible via a reverse proxy configured within the main NGINX container.
 * **Adminer**: A database management tool running in its own container. To maintain a clean repository, the Adminer PHP script is downloaded dynamically via `wget` during the image build process.
+* **Redis Cache**: A Redis container serving as an object cache for WordPress. The WordPress setup script dynamically installs and configures the Redis plugin via WP-CLI to significantly improve page load performance.
+* **FTP Server (vsftpd)**: A Very Secure FTP Daemon pointing directly to the WordPress volume (`/var/www/html`). It allows the specified user to upload, download, or modify website files remotely. It is strictly configured with passive mode to work flawlessly across the Docker network bridge.
+* **cAdvisor**: A monitoring daemon by Google that collects, aggregates, processes, and exports information about running containers. It provides a real-time web UI dashboard for tracking resource usage (CPU, memory, network traffic) of the entire infrastructure.
 
 The design relies entirely on Docker Compose to orchestrate the containers, ensuring they communicate via an isolated internal network while persisting data securely on the host machine using localized Docker Volumes (bind mounts).
 
@@ -20,10 +23,12 @@ To build and execute this project, follow these steps:
 1. Ensure your host machine resolves `mmravec.42.fr` to `127.0.0.1` (or your VM's IP) in the `/etc/hosts` file.
 2. Create a `.env` file inside the `srcs/` directory containing the necessary credentials (see `DEV_DOC.md` for the template).
 3. Run `make` in the root directory to build and start the core infrastructure. Alternatively, run `make bonus` to include the bonus services.
-4. Access the services via your browser:
+4. Access the services via your browser or client:
    * **Main Website (WordPress)**: `https://mmravec.42.fr`
    * **Static Website (Bonus)**: `https://mmravec.42.fr/bonus/`
    * **Adminer (Bonus)**: `http://localhost:8080` (or replace `localhost` with your VM's IP). *Use `mariadb` as the server name when logging in.*
+   * **cAdvisor (Bonus)**: `http://localhost:8081` (or replace `localhost` with your VM's IP).
+   * **FTP Server (Bonus)**: Connect using an FTP client (e.g., FileZilla) to `localhost` (or your VM's IP) on port `21`, using the FTP credentials defined in your `.env` file.
 
 **Useful Makefile commands:**
 * `make`: Builds and starts the core infrastructure.
@@ -33,7 +38,7 @@ To build and execute this project, follow these steps:
 * `make fclean`: Fully wipes the system, including local physical data volumes, for a completely fresh start.
 
 ## Resources
-* **Official Documentation**: Docker, Docker Compose, Alpine Linux, NGINX, WordPress WP-CLI, MariaDB, Lighttpd.
+* **Official Documentation**: Docker, Docker Compose, Alpine Linux, NGINX, WordPress WP-CLI, MariaDB, Lighttpd, Redis, vsftpd, cAdvisor.
 * **AI Usage**: Artificial Intelligence (LLM) was used as a learning assistant throughout this project. I used it to understand complex concepts (like Docker internal DNS, FastCGI routing, Reverse Proxies, and PID 1 management), to debug errors (e.g., WordPress memory limits), and to structure these Markdown documentation files. All generated code was thoroughly reviewed, tested, and rewritten to ensure complete understanding before implementation.
 
 ## Technical Choices & Comparisons

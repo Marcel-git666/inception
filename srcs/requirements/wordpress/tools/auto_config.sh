@@ -54,6 +54,8 @@ else
     echo "Redis container not found. Skipping cache configuration."
 fi
 
+chown -R nobody:nobody /var/www/html
+
 echo "Starting PHP-FPM in the foreground (PID 1)..."
 # Using exec to replace the script with the PHP process
 exec php-fpm83 -F

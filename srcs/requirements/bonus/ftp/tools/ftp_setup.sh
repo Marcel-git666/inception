@@ -15,5 +15,4 @@ fi
 echo "FTP Server starting for user: $FTP_USER"
 
 # Run vsftpd in the foreground (required by Docker)
-/usr/sbin/vsftpd /etc/nginx/nginx.conf # Error check: use /etc/vsftpd.conf instead
 exec /usr/sbin/vsftpd /etc/vsftpd.conf

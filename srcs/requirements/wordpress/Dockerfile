@@ -9,8 +9,6 @@ RUN apk update && apk add --no-cache \
     php-phar \
     php-mbstring \
     php-iconv \
-    php83-tokenizer \
-    php83-ctype \
     curl \
     mariadb-client
 

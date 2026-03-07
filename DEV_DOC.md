@@ -44,7 +44,13 @@ This project uses a custom Docker bridge network (`inception`) to allow internal
   * *Deployment Strategy:* The static HTML/CSS files are baked directly into the image using the `COPY` instruction in the Dockerfile, ensuring a stateless and highly portable container.
 * **Adminer:** A standalone database management tool exposed on host port 8080.
   * *Deployment Strategy:* To maintain a clean repository according to 42 school norms, the PHP script is not stored locally. Instead, it is dynamically downloaded via `wget` during the image build process.
-
+* **Redis Cache:** An in-memory key-value store running on internal port 6379.
+  * *Integration Strategy:* The WordPress container dynamically checks for the presence of the Redis host during its setup phase. If found, it automatically installs the `redis-cache` plugin via WP-CLI and routes object cache requests to this container.
+* **FTP Server (vsftpd):** Exposes port 21 for command traffic and a specific range of ports (30000-30009) for passive data transfer mode.
+  * *Deployment Strategy:* A custom initialization script executes on startup to create a local Alpine user using the credentials from `.env`. This user is then granted ownership over the shared WordPress volume (`/var/www/html`) to allow direct file manipulation.
+* **cAdvisor:** A container resource monitoring tool exposed on host port 8081.
+  * *Deployment Strategy:* The Dockerfile uses a shell script block to detect the host machine's architecture (`amd64` vs `arm64`) and downloads the appropriate binary release via `curl`. It requires root privileges and specific read-only volume mounts (`/`, `/var/run`, `/sys`, `/var/lib/docker`) to securely read the Docker daemon's metrics.
+  
 ## Useful Developer Commands
 * `docker compose -f srcs/docker-compose-bonus.yml logs -f`: Tail the logs of all running containers in real-time.
 * `docker exec -it <container_name> /bin/sh`: Open an interactive shell inside a running Alpine container for debugging.
