@@ -31,8 +31,7 @@ clean:
 
 # Full clean: runs clean, then removes all physical data from the host disk
 fclean: clean
-	@sudo rm -rf /home/mmravec/data/mariadb/*
-	@sudo rm -rf /home/mmravec/data/wordpress/*
+	@sudo rm -rf /home/mmravec/data
 
 # Rebuild the entire project from scratch
 re: fclean all

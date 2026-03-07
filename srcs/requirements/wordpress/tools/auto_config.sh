@@ -1,9 +1,9 @@
 #!/bin/sh
 
-# Go to the WordPress web directory (mapped via Docker Volumes)
+# 1. Go to the WordPress web directory
 cd /var/www/html
 
-# Check if WordPress is already installed by looking for the configuration file
+# 2. Check if WordPress is already installed
 if [ ! -f "wp-config.php" ]; then
     echo "WordPress is not installed. Starting configuration..."
 
@@ -11,7 +11,7 @@ if [ ! -f "wp-config.php" ]; then
     wp core download --allow-root
 
     # Create the wp-config.php file using environment variables
-    # The --dbhost connects to our database container via internal Docker DNS
+    # Database connection uses internal Docker DNS 'mariadb'
     wp config create --dbname="${MYSQL_DATABASE}" \
                      --dbuser="${MYSQL_USER}" \
                      --dbpass="${MYSQL_PASSWORD}" \
@@ -19,7 +19,7 @@ if [ ! -f "wp-config.php" ]; then
                      --allow-root
 
     # Install WordPress and set up the administrator account
-    # [cite_start]Note: The admin username cannot contain 'admin' or 'administrator' [cite: 107]
+    # CRITICAL: The admin username MUST NOT contain 'admin' or 'Admin'
     wp core install --url="https://${DOMAIN_NAME}" \
                     --title="Inception 42" \
                     --admin_user="${WP_ADMIN_USER}" \
@@ -28,7 +28,7 @@ if [ ! -f "wp-config.php" ]; then
                     --skip-email \
                     --allow-root
 
-    # Create a regular user (e.g., an author) for WordPress
+    # Create a regular user for WordPress
     wp user create "${WP_USER}" "${WP_USER_EMAIL}" \
                    --user_pass="${WP_USER_PASSWORD}" \
                    --role=author \
@@ -36,10 +36,24 @@ if [ ! -f "wp-config.php" ]; then
 
     echo "WordPress successfully configured!"
 else
-    echo "WordPress is already configured. Skipping installation..."
+    echo "WordPress is already configured. Persistence check passed."
 fi
 
-echo "Starting PHP-FPM in the foreground..."
-# The exec command replaces the shell script with the PHP-FPM process (making it PID 1)
-# The -F flag forces PHP-FPM to run in the foreground instead of as a daemon, which is required for Docker containers.
+# --- BONUS: DYNAMIC REDIS CONFIGURATION ---
+if getent hosts redis > /dev/null; then
+    echo "Redis container detected. Configuring Object Cache..."
+    wp config set WP_REDIS_HOST redis --allow-root
+    wp config set WP_REDIS_PORT 6379 --allow-root
+    wp config set WP_CACHE true --raw --allow-root
+    
+    if ! wp plugin is-installed redis-cache --allow-root; then
+        wp plugin install redis-cache --activate --allow-root
+        wp redis enable --allow-root
+    fi
+else
+    echo "Redis container not found. Skipping cache configuration."
+fi
+
+echo "Starting PHP-FPM in the foreground (PID 1)..."
+# Using exec to replace the script with the PHP process
 exec php-fpm83 -F
