@@ -1,5 +1,6 @@
 # Path to the docker-compose file
 COMPOSE_FILE = ./srcs/docker-compose.yml
+BONUS_FILE   = ./srcs/docker-compose-bonus.yml
 
 # Main rule, executed when running just 'make'
 all: build up
@@ -22,13 +23,12 @@ up:
 
 # Stop the containers (without deleting data volumes)
 down:
-	docker compose -f ./srcs/docker-compose.yml down
-	docker compose -f ./srcs/docker-compose-bonus.yml down
+	@docker compose -f $(COMPOSE_FILE) down
+	@docker compose -f $(BONUS_FILE) down
 
 # Stop containers, remove networks, volumes, and clean Docker cache
-clean:
-	docker compose -f $(COMPOSE_FILE) down -v
-	docker system prune -af
+clean: down
+	@docker system prune -a -f
 
 # Full clean: runs clean, then removes all physical data from the host disk
 fclean: clean

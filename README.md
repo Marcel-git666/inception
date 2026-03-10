@@ -54,3 +54,67 @@ Using the Host Network binds the container directly to the host machine's networ
 
 ### Docker Volumes vs Bind Mounts
 Bind Mounts hardcode a specific path from the host machine directly into the container. This depends heavily on the host's directory structure and permissions, making it less portable. Docker Volumes are managed entirely by the Docker daemon in a secure area of the host filesystem (`/var/lib/docker/volumes/`). They are easier to back up, more secure, and guarantee consistent behavior across different host operating systems.
+
+# Inception - Verification Guide
+
+This guide explains how to verify that all mandatory and bonus services are running correctly.
+
+## Service Verification
+
+### 1. Redis Cache (Object Cache)
+
+To verify that WordPress is successfully communicating with the Redis container:
+
+1. Open a separate terminal and run:
+   ```bash
+   docker exec -it redis redis-cli monitor
+   ```
+2. Refresh your WordPress site in the browser or click through the Admin Dashboard.
+3. Expected result: You should see real-time `GET` and `SET` commands appearing in the terminal.
+4. Dashboard check: Go to `WP-Admin → Settings → Redis`. The status must be **Connected**.
+
+---
+
+### 2. FTP Server
+
+To verify FTP access to the WordPress files from your virtual machine terminal:
+
+1. Use the standard FTP client:
+   ```bash
+   ftp -p localhost 21
+   ```
+2. Credentials: Use your `FTP_USER` and `FTP_PWD` from the `.env` file.
+3. **Note:** The `-p` flag is crucial for Passive Mode to work within the Docker network.
+
+---
+
+### 3. Adminer (Database Management)
+
+- **URL:** `http://localhost:8080`
+- **System:** MySQL
+- **Server:** `mariadb`
+- **Username/Password:** Use your `MYSQL_USER` and `MYSQL_PASSWORD` from `.env`.
+- **Expected result:** You should be able to browse and manage the `wordpress_db` tables.
+
+---
+
+### 4. cAdvisor (Container Monitoring)
+
+- **URL:** `http://localhost:8081`
+- **Verification:** Check the dashboard for real-time CPU and Memory usage statistics for all containers in the stack.
+
+---
+
+### 5. Static Website (Bonus Page)
+
+- **URL:** `https://mmravec.42.fr/bonus/`
+- **Verification:** Confirms that NGINX is correctly proxying requests to the `lighttpd` service and displaying the static HTML content.
+
+---
+
+## Troubleshooting
+
+### WordPress reports "Redis is unreachable"
+
+1. Check that `WP_REDIS_HOST` is defined in `wp-config.php` **above** the `wp-settings.php` require line.
+2. Run `make fclean` followed by `make bonus` to ensure a clean auto-configuration of the WordPress volume.
