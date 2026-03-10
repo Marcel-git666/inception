@@ -1,7 +1,13 @@
 # 1. Use the same Alpine version as NGINX
 FROM alpine:3.22
 
-# 2. Install PHP, PHP-FPM, and extensions required for WordPress and database communication
+# 2. Install PHP, dependencies for WordPress, and tools for setup
+# - php-mysqli: Database connection driver for WordPress
+# - php-phar: Required to run wp-cli (.phar archive)
+# - php-mbstring: Required by WordPress for string manipulation
+# - php-iconv: Required by WordPress for character encoding
+# - curl: Used to download wp-cli
+# - mariadb-client: Used to ping the database before WordPress setup
 RUN apk update && apk add --no-cache \
     php \
     php-fpm \
