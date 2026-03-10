@@ -28,6 +28,8 @@ WP_ADMIN_EMAIL=mmravec@student.42.fr
 WP_USER=author_user
 WP_USER_EMAIL=author@42.fr
 WP_USER_PASSWORD=your_author_pass
+FTP_USER=your_ftp_user
+FTP_PWD=your_ftp_password
 ```
 
 ## Project Architecture & Routing
